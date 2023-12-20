@@ -1,7 +1,0 @@
-name: Taipy install verifier
-description: Import taipy and check attributes and required files
-author: Taipy Team <dev@taipy.io>
-
-runs:
-  using: docker
-  image: Dockerfile

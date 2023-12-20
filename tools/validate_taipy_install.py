@@ -26,7 +26,7 @@ def test_taipy_gui_core() -> bool:
     import taipy
     from pathlib import Path
 
-    taipy_gui_core_path = Path(taipy.__file__).absolute().parent / 'gui_core' / 'lib' / 'taipy-gui-core.js'
+    taipy_gui_core_path = Path(taipy.__file__).absolute().parent / "gui_core" / "lib" / "taipy-gui-core.js"
     if not taipy_gui_core_path.exists():
         logging.error("File taipy-gui-core.js not found in taipy installation path")
         return False
@@ -42,4 +42,3 @@ if __name__ == "__main__":
 
     logging.info("Taipy installation Validated")
     sys.exit(0)
-

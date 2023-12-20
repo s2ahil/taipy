@@ -6,6 +6,8 @@ on:
 
 jobs:
   tests:
+    secrets:
+      endpoint: ${{ secrets.notify_endpoint }}
     if: github.event.review.state == 'approved'
     timeout-minutes: 40
     strategy:
@@ -51,9 +53,10 @@ jobs:
           title: Taipy Overall Coverage Report
 
       - name: Notify user if failed
-        if: failure() && github.event_name == 'workflow_dispatch'
+        if: failure()
         run: |
           if [[ -n "${{ github.event.inputs.user-to-notify }}" ]]; then
             curl "${{ secrets.notify_endpoint }}" -d '{"username": "${{ github.event.inputs.user-to-notify }}", "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" }' -H "Content-Type: application/json"
           fi
         shell: bash
+
