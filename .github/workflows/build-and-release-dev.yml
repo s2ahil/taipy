@@ -1,7 +1,8 @@
 name: Build a dev version for all packages and release them
 
 on:
-  workflow_dispatch:
+  pull_request_review:
+    types: [submitted]
 
 jobs:
   build-and-release-dev:
@@ -13,7 +14,7 @@ jobs:
           ssh-key: ${{secrets.DEPLOY_KEY}}
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: 3.9
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -28,126 +29,123 @@ jobs:
         run: echo "HASH=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
         id: extract_hash
 
-      - name: Build Taipy Config
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build wheel
+
+      - name: Build py Taipy Config
         working-directory: ./taipy/config
         run: python setup.py build_py && python -m build
 
       - name: Create tag and release Taipy Config
         working-directory: ./taipy/config
         run: |
-          gh release create ${{ steps.version-setup.outputs.config_VERSION }}-config ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.config_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.config_VERSION }}-config --notes "Release Draft ${{ steps.version-setup.outputs.config_VERSION }}-config"
+          gh release create ${{ steps.version-setup.outputs.config_VERSION }}-config ./dist/${{ github.event.repository.name }}-config-${{ steps.version-setup.outputs.config_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.config_VERSION }}-config --notes "Release Draft ${{ steps.version-setup.outputs.config_VERSION }}-config"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Taipy Config
         working-directory: ./taipy/config
         run: |
-          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.config_VERSION }}.tar.gz
+          pip install ./dist/${{ github.event.repository.name }}-config-${{ steps.version-setup.outputs.config_VERSION }}.tar.gz
 
-      - name: Build Taipy Core
-        working-directory: ./taipy/core
-        run: python setup.py build_py && python -m build
-
-      - name: Create tag and release Taipy Core
-        working-directory: ./taipy/core
-        run: |
-          gh release create ${{ steps.version-setup.outputs.core_VERSION }}-core ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.core_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.core_VERSION }}-core --notes "Release Draft ${{ steps.version-setup.outputs.core_VERSION }}-core"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Taipy Core
-        working-directory: ./taipy/core
-        run: |
-          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.core_VERSION }}.tar.gz
-
-      - name: Build Taipy Gui
-        working-directory: ./taipy/gui
-        run: python setup.py build_py && python -m build
-
-      - name: Create tag and release Taipy Gui
-        working-directory: ./taipy/gui
-        run: |
-          gh release create ${{ steps.version-setup.outputs.gui_VERSION }}-gui ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.gui_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.gui_VERSION }}-gui --notes "Release Draft ${{ steps.version-setup.outputs.gui_VERSION }}-gui"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Taipy Gui
-        working-directory: ./taipy/gui
-        run: |
-          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.gui_VERSION }}.tar.gz
-
-      - name: Build Taipy Rest
-        working-directory: ./taipy/rest
-        run: python setup.py build_py && python -m build
-
-      - name: Create tag and release Taipy Rest
-        working-directory: ./taipy/rest
-        run: |
-          gh release create ${{ steps.version-setup.outputs.rest_VERSION }}-rest ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.rest_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.rest_VERSION }}-rest --notes "Release Draft ${{ steps.version-setup.outputs.rest_VERSION }}-rest"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Taipy Rest
-        working-directory: ./taipy/rest
-        run: |
-          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.rest_VERSION }}.tar.gz
-
-      - name: Build Taipy templates
-        working-directory: ./taipy/templates
-        run: python setup.py build_py && python -m build
-
-      - name: Create tag and release Taipy templates
-        working-directory: ./taipy/templates
-        run: |
-          gh release create ${{ steps.version-setup.outputs.templates_VERSION }}-templates ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.templates_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.templates_VERSION }}-templates --notes "Release Draft ${{ steps.version-setup.outputs.templates_VERSION }}-templates"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Taipy templates
-        working-directory: ./taipy/templates
-        run: |
-          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.templates_VERSION }}.tar.gz
-
-      - name: Build Taipy package
-        run: python setup.py build_py && python -m build
-
-      - name: Create tag and release Taipy
-        run: |
-          gh release create ${{ steps.version-setup.outputs.VERSION }} ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.VERSION }} --notes "Release Draft ${{ steps.version-setup.outputs.VERSION }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Taipy
-        run: |
-          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.VERSION }}.tar.gz
-
-      - name: Check Taipy Installation
-        run: |
-          python tools/validate_taipy_install.py
-
-      - name: Bundle all packages in main release tag
-        run: |
-          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/config/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.config_VERSION }}.tar.gz --clobber
-          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/core/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.core_VERSION }}.tar.gz --clobber
-          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/gui/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.gui_VERSION }}.tar.gz --clobber
-          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/rest/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.rest_VERSION }}.tar.gz --clobber
-          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/templates/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.templates_VERSION }}.tar.gz --clobber
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-      - name: Create/update release and tag
-        run: |
-          echo "Creating release ${{ steps.current-version.outputs.VERSION }}"
-          gh release create ${{ steps.version-setup.outputs.VERSION }} ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.VERSION }} --notes "Release Draft ${{ steps.version-setup.outputs.VERSION }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Build Taipy Core
+#        working-directory: ./taipy/core
+#        run: python setup.py build_py && python -m build
+#
+#      - name: Create tag and release Taipy Core
+#        working-directory: ./taipy/core
+#        run: |
+#          gh release create ${{ steps.version-setup.outputs.core_VERSION }}-core ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.core_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.core_VERSION }}-core --notes "Release Draft ${{ steps.version-setup.outputs.core_VERSION }}-core"
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Install Taipy Core
+#        working-directory: ./taipy/core
+#        run: |
+#          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.core_VERSION }}.tar.gz
+#
+#      - name: Build Taipy Gui
+#        working-directory: ./taipy/gui
+#        run: python setup.py build_py && python -m build
+#
+#      - name: Create tag and release Taipy Gui
+#        working-directory: ./taipy/gui
+#        run: |
+#          gh release create ${{ steps.version-setup.outputs.gui_VERSION }}-gui ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.gui_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.gui_VERSION }}-gui --notes "Release Draft ${{ steps.version-setup.outputs.gui_VERSION }}-gui"
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Install Taipy Gui
+#        working-directory: ./taipy/gui
+#        run: |
+#          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.gui_VERSION }}.tar.gz
+#
+#      - name: Build Taipy Rest
+#        working-directory: ./taipy/rest
+#        run: python setup.py build_py && python -m build
+#
+#      - name: Create tag and release Taipy Rest
+#        working-directory: ./taipy/rest
+#        run: |
+#          gh release create ${{ steps.version-setup.outputs.rest_VERSION }}-rest ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.rest_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.rest_VERSION }}-rest --notes "Release Draft ${{ steps.version-setup.outputs.rest_VERSION }}-rest"
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Install Taipy Rest
+#        working-directory: ./taipy/rest
+#        run: |
+#          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.rest_VERSION }}.tar.gz
+#
+#      - name: Build Taipy templates
+#        working-directory: ./taipy/templates
+#        run: python setup.py build_py && python -m build
+#
+#      - name: Create tag and release Taipy templates
+#        working-directory: ./taipy/templates
+#        run: |
+#          gh release create ${{ steps.version-setup.outputs.templates_VERSION }}-templates ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.templates_VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.templates_VERSION }}-templates --notes "Release Draft ${{ steps.version-setup.outputs.templates_VERSION }}-templates"
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Install Taipy templates
+#        working-directory: ./taipy/templates
+#        run: |
+#          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.templates_VERSION }}.tar.gz
+#
+#      - name: Build Taipy package
+#        run: python setup.py build_py && python -m build
+#
+#      - name: Create tag and release Taipy
+#        run: |
+#          gh release create ${{ steps.version-setup.outputs.VERSION }} ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.VERSION }}.tar.gz --target ${{ steps.extract_hash.outputs.HASH }} --prerelease --title ${{ steps.version-setup.outputs.VERSION }} --notes "Release Draft ${{ steps.version-setup.outputs.VERSION }}"
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Install Taipy
+#        run: |
+#          pip install ./dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.VERSION }}.tar.gz
+#
+#      - name: Check Taipy Installation
+#        run: |
+#          python tools/validate_taipy_install.py
+#
+#      - name: Bundle all packages in main release tag
+#        run: |
+#          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/config/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.config_VERSION }}.tar.gz --clobber
+#          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/core/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.core_VERSION }}.tar.gz --clobber
+#          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/gui/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.gui_VERSION }}.tar.gz --clobber
+#          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/rest/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.rest_VERSION }}.tar.gz --clobber
+#          gh release upload ${{ steps.version-setup.outputs.VERSION }} ./taipy/templates/dist/${{ github.event.repository.name }}-${{ steps.version-setup.outputs.templates_VERSION }}.tar.gz --clobber
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Reset changes
         run: |
           git reset --hard HEAD
           git clean -fdx
 
-      - uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Update version to ${{ steps.version-setup.outputs.NEW_VERSION }}
+#      - uses: stefanzweifel/git-auto-commit-action@v4
+#        with:
+#          commit_message: Update version to ${{ steps.version-setup.outputs.NEW_VERSION }}

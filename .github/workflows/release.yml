@@ -27,8 +27,8 @@ jobs:
 
       - name: Setup Version
         id: version-setup
-          run: |
-            python tools/release/setup_version.py taipy prod "${{ github.event.inputs.version }}" "${{ steps.extract_branch.outputs.branch }}"
+        run: |
+          python tools/release/setup_version.py taipy prod "${{ github.event.inputs.version }}" "${{ steps.extract_branch.outputs.branch }}"
 
       - name: Modify README image file path
         run: |
@@ -45,6 +45,7 @@ jobs:
           pip install build wheel
 
       - name: Install Taipy Gui
+        run: |
           # install taipy-gui from based on setup.py version
           pip install "${{ steps.taipy_gui_version.outputs.VERSION }}"
 
