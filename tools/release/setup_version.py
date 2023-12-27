@@ -3,6 +3,7 @@ import json
 import os
 from dataclasses import dataclass, asdict
 import re
+from typing import Optional
 
 
 @dataclass
@@ -15,7 +16,7 @@ class Version:
     def bump_ext_version(self) -> None:
         if not self.ext:
             return
-        reg = re.compile(r'[0-9]+$')
+        reg = re.compile(r"[0-9]+$")
         num = reg.findall(self.ext)[0]
 
         self.ext = self.ext.replace(num, str(int(num) + 1))
@@ -51,20 +52,14 @@ def extract_version(base_path: str) -> Version:
     return __load_version_from_path(base_path)
 
 
-def bump_dev_version(base_path: str) -> None:
-    """
-    Load version.json file, bump its extension and write it to the base_path.
-    """
-    version = __load_version_from_path(base_path)
-    version.bump_ext_version()
-    __write_version_to_path(base_path, version)
-
-
-def __setup_dev_version(version: Version) -> None:
+def __setup_dev_version(version: Version, _base_path: str, name: Optional[str] = None, bump_dev_version: bool = False) -> None:
+    name = f"{name}_VERSION" if name else "VERSION"
     version.validate_suffix()
-    print(f"VERSION={version}")
+    print(f"{name}={version}")
+    if bump_dev_version:
+        version.bump_ext_version()
     __write_version_to_path(_base_path, version)
-    print(f"NEW_VERSION={version}")
+    print(f"NEW_{name}={version}")
 
 
 def __setup_prod_version(version: Version, target_version: str, branch_name: str) -> None:
@@ -72,18 +67,36 @@ def __setup_prod_version(version: Version, target_version: str, branch_name: str
         raise ValueError(f"Current version={version} does not match target version={target_version}")
 
     if target_branch_name := f"release/{version.major}.{version.minor}" != branch_name:
-        raise ValueError(f"Branch name mismatch branch={branch_name} does not match target branch name={target_branch_name}")
+        raise ValueError(
+            f"Branch name mismatch branch={branch_name} does not match target branch name={target_branch_name}"
+        )
 
 
 if __name__ == "__main__":
-    _base_path = sys.argv[1]
+    paths = (
+        [sys.argv[1]]
+        if sys.argv[1] != "ALL"
+        else [
+            f"taipy{os.sep}config",
+            f"taipy{os.sep}core",
+            f"taipy{os.sep}rest",
+            f"taipy{os.sep}gui",
+            f"taipy{os.sep}templates",
+        ]
+    )
     _environment = sys.argv[2]
+    should_bump = False
 
-    _version = extract_version(_base_path)
-    if _environment == "dev":
-        __setup_dev_version(_version)
+    try:
+        should_bump = True if sys.argv[3] == "bump" else False
+    except IndexError:
+        pass
 
-    if _environment == "prod":
-        __setup_prod_version(_version, sys.argv[3], sys.argv[4])
+    for _path in paths:
+        _version = extract_version(_path)
+        if _environment == "dev":
+            _name = None if _path == "taipy" else _path.split(os.sep)[-1]
+            __setup_dev_version(_version, _path, _name, should_bump)
 
-
+        if _environment == "prod":
+            __setup_prod_version(_version, sys.argv[3], sys.argv[4])
