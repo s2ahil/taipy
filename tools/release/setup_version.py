@@ -52,7 +52,9 @@ def extract_version(base_path: str) -> Version:
     return __load_version_from_path(base_path)
 
 
-def __setup_dev_version(version: Version, _base_path: str, name: Optional[str] = None, bump_dev_version: bool = False) -> None:
+def __setup_dev_version(
+    version: Version, _base_path: str, name: Optional[str] = None, bump_dev_version: bool = False
+) -> None:
     name = f"{name}_VERSION" if name else "VERSION"
     version.validate_suffix()
     print(f"{name}={version}")
@@ -82,6 +84,7 @@ if __name__ == "__main__":
             f"taipy{os.sep}rest",
             f"taipy{os.sep}gui",
             f"taipy{os.sep}templates",
+            "taipy",
         ]
     )
     _environment = sys.argv[2]
