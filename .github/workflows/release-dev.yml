@@ -53,7 +53,7 @@ jobs:
         if: github.event.inputs.taipy-gui-version != '' && github.event.inputs.taipy-rest-version != '' && github.event.inputs.taipy-templates-version != ''
         run: |
           mv setup.py setup.taipy.py
-          python tools/release//update_setup.py "${{ github.event.inputs.taipy-gui-version }}" "${{ github.event.inputs.taipy-rest-version }}" "${{ github.event.inputs.taipy-templates-version }}"
+          python tools/release/update_setup.py "${{ github.event.inputs.taipy-gui-version }}" "${{ github.event.inputs.taipy-rest-version }}" "${{ github.event.inputs.taipy-templates-version }}"
 
       - name: Build Taipy package
         run: python setup.py build_py && python -m build
