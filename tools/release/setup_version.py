@@ -1,8 +1,8 @@
-import sys
 import json
 import os
-from dataclasses import dataclass, asdict
 import re
+import sys
+from dataclasses import asdict, dataclass
 from typing import Optional
 
 
@@ -57,11 +57,11 @@ def __setup_dev_version(
 ) -> None:
     name = f"{name}_VERSION" if name else "VERSION"
     version.validate_suffix()
-    print(f"{name}={version}")
+    print(f"{name}={version}")  # noqa: T201
     if bump_dev_version:
         version.bump_ext_version()
     __write_version_to_path(_base_path, version)
-    print(f"NEW_{name}={version}")
+    print(f"NEW_{name}={version}")  # noqa: T201
 
 
 def __setup_prod_version(version: Version, target_version: str, branch_name: str) -> None:
