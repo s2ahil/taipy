@@ -57,7 +57,10 @@ jobs:
           python-version: ${{matrix.python-version}}
 
       - name: Install pipenv
-        run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+        run: pip install --upgrade pipenv
+
+      - name: Install Setuptools and wheel
+        run: pip install --upgrade setuptools wheel
 
       - name: Install Dependencies
         run: pipenv install --dev --python=${{ matrix.python-version }}
@@ -134,7 +137,7 @@ jobs:
 
       - name: Install pipenv
         if: steps.changes.outputs.core == 'true'
-        run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+        run: pip install --upgrade pipenv
 
       - name: Install Dependencies
         if: steps.changes.outputs.core == 'true'
@@ -173,7 +176,7 @@ jobs:
 
       - name: Install pipenv
         if: steps.changes.outputs.core == 'true'
-        run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+        run: pip install --upgrade pipenv
 
       - name: Install Dependencies
         if: steps.changes.outputs.core == 'true'
